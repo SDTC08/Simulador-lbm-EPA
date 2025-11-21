@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simulador LBM 2D Pro - Escuela Peruana del Agua</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        body.fullscreen {
+            padding: 0;
+        }
+
+        .main-container {
+            max-width: 1600px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        body.fullscreen .main-container {
+            max-width: 100%;
+            height: 100vh;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 50%, #6366f1 100%);
+            border-radius: 12px 12px 0 0;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 20px rgba(14, 165, 233, 0.3);
+        }
+
+        body.fullscreen .header-section {
+            border-radius: 0;
+        }
+
+        .logo-title-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-container {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            padding: 6px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .logo-container img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+
+        .title-group h1 {
+            color: white;
+            font-size: 16px;
+            font-weight: 800;
+            margin-bottom: 2px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .title-group p {
+            color: rgba(255, 255, 255, 0.95);
+            font-size: 10px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .header-btn {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+        }
+
+        .header-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .container {
+            background: #1e293b;
+            border-radius: 0 0 12px 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+        }
+
+        body.fullscreen .container {
+            border-radius: 0;
+            height: calc(100vh - 60px);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, #334155 0%, #475569 100%);
+            padding: 12px 16px;
+            color: #e2e8f0;
+            font-size: 11px;
+            line-height: 1.6;
+            border-bottom: 2px solid #475569;
+        }
+
+        .info-box.hidden {
+            display: none;
+        }
+
+        .info-box strong {
+            color: #7dd3fc;
+            font-weight: 700;
+        }
+
+        .info-box p {
+            margin-bottom: 6px;
+        }
+
+        .main-content {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar {
+            background: #1e293b;
+            padding: 12px;
+            border-bottom: 2px solid #334155;
+            overflow-y: auto;
+            max-height: none;
+        }
+
+        .stats-sidebar {
+            background: #1e293b;
+            padding: 12px;
+            border-top: 2px solid #334155;
+            overflow-y: auto;
+        }
+
+        .config-section {
+            margin-bottom: 16px;
+        }
+
+        .config-section h3 {
+            font-size: 12px;
+            margin-bottom: 10px;
+            color: #7dd3fc;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .slider-container {
+            margin-bottom: 12px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 11px;
+            color: #cbd5e1;
+        }
+
+        .slider-value {
+            color: #4ade80;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 5px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #0ea5e9 0%, #3b82f6 100%);
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+            border: 2px solid #0ea5e9;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: 2px solid #0ea5e9;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .preset-buttons, .obstacle-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .preset-btn, .obstacle-btn {
+            padding: 10px 8px;
+            border: 2px solid #475569;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .preset-btn:active, .obstacle-btn:active {
+            transform: scale(0.95);
+        }
+
+        .preset-btn.active, .obstacle-btn.active {
+            background: linear-gradient(135deg, #0ea5e9 0%, #3b82f6 100%);
+            border-color: #3b82f6;
+            color: white;
+            box-shadow: 0 3px 10px rgba(14, 165, 233, 0.4);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+            font-size: 11px;
+            cursor: pointer;
+            color: #cbd5e1;
+        }
+
+        input[type="checkbox"] {
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            accent-color: #0ea5e9;
+        }
+
+        .color-scheme-select {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #475569;
+            background: #0f172a;
+            color: #e2e8f0;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .canvas-section {
+            padding: 12px;
+            background: #0f172a;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            margin-bottom: 12px;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        canvas {
+            border: 2px solid #334155;
+            border-radius: 8px;
+            cursor: crosshair;
+            display: block;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+        }
+
+        .legend-horizontal {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid #475569;
+            border-radius: 8px;
+            padding: 10px 12px;
+            margin-bottom: 12px;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .legend-title {
+            font-size: 10px;
+            font-weight: 700;
+            color: #7dd3fc;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .legend-bar-container {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            width: 100%;
+        }
+
+        .legend-gradient-horizontal {
+            flex: 1;
+            height: 20px;
+            border-radius: 4px;
+            border: 1px solid #475569;
+            position: relative;
+            min-width: 0;
+        }
+
+        .legend-labels-horizontal {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 9px;
+            color: #cbd5e1;
+            font-family: 'Courier New', monospace;
+            width: 100%;
+        }
+
+        .legend-label-item {
+            text-align: center;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .legend-label-value {
+            font-weight: 700;
+            color: #4ade80;
+            font-size: 10px;
+            display: block;
+        }
+
+        .legend-label-text {
+            font-size: 7px;
+            color: #94a3b8;
+            margin-top: 1px;
+            display: block;
+        }
+
+        .stats-panel {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 2px solid #475569;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 800;
+            color: #4ade80;
+            font-family: 'Courier New', monospace;
+        }
+
+        .chart-container {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 2px solid #475569;
+        }
+
+        .chart-title {
+            font-size: 11px;
+            color: #7dd3fc;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        #dragChart {
+            width: 100%;
+            height: 120px;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .metric-card {
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            padding: 10px;
+        }
+
+        .metric-card-title {
+            font-size: 9px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .metric-card-value {
+            font-size: 18px;
+            color: #7dd3fc;
+            font-weight: 800;
+            font-family: 'Courier New', monospace;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            width: 100%;
+        }
+
+        button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 12px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+        }
+
+        .btn-clear {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 16px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #94a3b8;
+            font-size: 10px;
+            border-top: 2px solid #334155;
+        }
+
+        body.fullscreen .footer {
+            display: none;
+        }
+
+        .footer p {
+            margin-bottom: 6px;
+        }
+
+        .footer-highlight {
+            color: #7dd3fc;
+            font-weight: 700;
+        }
+
+        .footer-brand {
+            font-size: 14px;
+            font-weight: 800;
+            color: #0ea5e9;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #334155;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .particle-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Desktop styles */
+        @media (min-width: 768px) {
+            body {
+                padding: 20px;
+            }
+
+            .header-section {
+                padding: 20px 32px;
+                border-radius: 16px 16px 0 0;
+            }
+
+            .logo-container {
+                width: 70px;
+                height: 70px;
+            }
+
+            .title-group h1 {
+                font-size: 28px;
+            }
+
+            .title-group p {
+                display: block;
+                font-size: 13px;
+            }
+
+            .header-btn {
+                padding: 10px 16px;
+                font-size: 13px;
+            }
+
+            .container {
+                border-radius: 0 0 16px 16px;
+            }
+
+            .main-content {
+                display: grid;
+                grid-template-columns: 280px 1fr 320px;
+                flex-direction: row;
+            }
+
+            body.fullscreen .main-content {
+                grid-template-columns: 250px 1fr;
+            }
+
+            body.fullscreen .stats-sidebar {
+                display: none;
+            }
+
+            .sidebar {
+                padding: 20px;
+                border-right: 2px solid #334155;
+                border-bottom: none;
+                max-height: 700px;
+            }
+
+            .stats-sidebar {
+                padding: 20px;
+                border-left: 2px solid #334155;
+                border-top: none;
+                max-height: 700px;
+            }
+
+            .canvas-section {
+                padding: 20px;
+            }
+
+            .canvas-wrapper {
+                margin-bottom: 16px;
+            }
+
+            canvas {
+                width: auto;
+                max-width: 900px;
+            }
+
+            .controls {
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            button {
+                padding: 14px 24px;
+                font-size: 13px;
+            }
+
+            .legend-title {
+                font-size: 12px;
+            }
+
+            .legend-horizontal {
+                padding: 14px 18px;
+            }
+
+            .legend-gradient-horizontal {
+                height: 28px;
+            }
+
+            .legend-labels-horizontal {
+                font-size: 10px;
+            }
+
+            .legend-label-value {
+                font-size: 12px;
+            }
+
+            .legend-label-text {
+                font-size: 9px;
+            }
+
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stat-value {
+                font-size: 20px;
+            }
+
+            #dragChart {
+                height: 160px;
+            }
+        }
+
+        .sidebar::-webkit-scrollbar, .stats-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar::-webkit-scrollbar-track, .stats-sidebar::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb, .stats-sidebar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header-section">
+            <div class="logo-title-section">
+                <div class="logo-container">
+                    <img src="https://i.ibb.co/3x8qvTR/LOGO-EPA-YT.png" alt="Logo EPA" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22%3E%3Ctext y=%2250%22 font-size=%2240%22 fill=%22%230ea5e9%22%3EEPA%3C/text%3E%3C/svg%3E'">
+                </div>
+                <div class="title-group">
+                    <h1>Simulador LBM 2D</h1>
+                    <p>Método de Lattice Boltzmann - Dinámica de Fluidos</p>
+                </div>
+            </div>
+            <div class="header-buttons">
+                <button class="header-btn" onclick="toggleInfo()">
+                    <span>ℹ️</span>
+                    <span>Info</span>
+                </button>
+                <button class="header-btn" onclick="toggleFullscreen()">
+                    <span id="fullscreenIcon">⛶</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="container">
+            <div id="infoBox" class="info-box hidden">
+                <p><strong>Simulador Profesional de Dinámica de Fluidos Computacional (CFD)</strong></p>
+                <p>• <strong>Método de Lattice Boltzmann (LBM)</strong> con lattice D2Q9</p>
+                <p>• <strong>Presets optimizados</strong>: Cada preset muestra diferentes regímenes de flujo</p>
+                <p>• <strong>Leyenda horizontal</strong>: Muestra velocidad mínima, media y máxima en tiempo real</p>
+            </div>
+
+            <div class="main-content">
+                <div class="sidebar">
+                    <div class="config-section">
+                        <h3>🎯 Presets</h3>
+                        <div class="preset-buttons">
+                            <button class="preset-btn" data-preset="laminar">🌊 Laminar</button>
+                            <button class="preset-btn" data-preset="transitional">🌀 Transición</button>
+                            <button class="preset-btn" data-preset="turbulent">💨 Turbulento</button>
+                            <button class="preset-btn" data-preset="vortex">🌪️ Vórtices</button>
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3>⚙️ Parámetros Físicos</h3>
+                        
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Velocidad</span>
+                                <span class="slider-value" id="velocityValue">0.15</span>
+                            </div>
+                            <input type="range" id="velocitySlider" min="0.05" max="0.25" step="0.01" value="0.15">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Viscosidad</span>
+                                <span class="slider-value" id="viscosityValue">1.70</span>
+                            </div>
+                            <input type="range" id="viscositySlider" min="1.0" max="1.95" step="0.05" value="1.70">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Velocidad Sim.</span>
+                                <span class="slider-value" id="stepsValue">3x</span>
+                            </div>
+                            <input type="range" id="stepsSlider" min="1" max="6" step="1" value="3">
+                        </div>
+                    </div>
+
+                    <div class="config-section">
+                        <h3>🔷 Obstáculos</h3>
+                        <div class="obstacle-buttons">
+                            <button class="obstacle-btn active" data-type="circle">⭕ Círculo</button>
+                            <button class="obstacle-btn" data-type="square">⬛ Cuadrado</button>
+                            <button class="obstacle-btn" data-type="airfoil">✈️ Perfil</button>
+                            <button class="obstacle-btn" data-type="cylinder">▬ Cilindro</button>
+                            <button class="obstacle-btn" data-type="diamond">◆ Diamante</button>
+                            <button class="obstacle-btn" data-type="draw">✏️ Dibujo</button>
+                        </div>
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="eraserMode">
+                            <span>Modo Borrador</span>
+                        </label>
+                    </div>
+
+                    <div class="config-section">
+                        <h3>🎨 Visualización</h3>
+                        
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showArrows" checked>
+                            <span>Vectores de Velocidad</span>
+                        </label>
+
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showStreamlines">
+                            <span>Líneas de Corriente</span>
+                        </label>
+
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="showParticles">
+                            <span>Partículas Trazadoras</span>
+                        </label>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Densidad Vectores</span>
+                                <span class="slider-value" id="arrowDensityValue">12</span>
+                            </div>
+                            <input type="range" id="arrowDensitySlider" min="5" max="25" step="1" value="12">
+                        </div>
+
+                        <div class="slider-container">
+                            <div class="slider-label">
+                                <span>Tamaño</span>
+                                <span class="slider-value" id="arrowSizeValue">1.5x</span>
+                            </div>
+                            <input type="range" id="arrowSizeSlider" min="0.5" max="3.0" step="0.1" value="1.5">
+                        </div>
+
+                        <div style="font-size: 10px; margin: 10px 0 6px 0; color: #94a3b8; font-weight: 600;">Esquema de Color:</div>
+                        <select class="color-scheme-select" id="colorScheme">
+                            <option value="rainbow">🌈 Arcoíris</option>
+                            <option value="viridis">🟢 Viridis</option>
+                            <option value="plasma">🔴 Plasma</option>
+                            <option value="turbo">⚡ Turbo</option>
+                            <option value="cool">❄️ Frío</option>
+                            <option value="hot">🔥 Caliente</option>
+                        </select>
+
+                        <div style="font-size: 10px; margin: 10px 0 6px 0; color: #94a3b8; font-weight: 600;">Color Vectores:</div>
+                        <select class="color-scheme-select" id="arrowColorScheme">
+                            <option value="white">Blanco</option>
+                            <option value="black">Negro</option>
+                            <option value="speed">Por Velocidad</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="canvas-section">
+                    <div class="stats-panel">
+                        <div class="stat-item">
+                            <div class="stat-label">FPS</div>
+                            <div class="stat-value" id="fps">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Reynolds</div>
+                            <div class="stat-value" id="reynolds">0</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Pasos</div>
+                            <div class="stat-value" id="totalSteps">0</div>
+                        </div>
+                    </div>
+
+                    <div class="canvas-wrapper">
+                        <canvas id="canvas" width="900" height="450"></canvas>
+                        <canvas id="particleCanvas" class="particle-container" width="900" height="450"></canvas>
+                    </div>
+
+                    <div class="legend-horizontal">
+                        <div class="legend-title">Velocidad del Flujo (m/s)</div>
+                        <div class="legend-bar-container">
+                            <div class="legend-gradient-horizontal" id="legendGradient"></div>
+                        </div>
+                        <div class="legend-labels-horizontal">
+                            <div class="legend-label-item">
+                                <span class="legend-label-value" id="minVelLegend">0.00</span>
+                                <span class="legend-label-text">Baja</span>
+                            </div>
+                            <div class="legend-label-item">
+                                <span class="legend-label-value" id="midVelLegend">0.15</span>
+                                <span class="legend-label-text">Media</span>
+                            </div>
+                            <div class="legend-label-item">
+                                <span class="legend-label-value" id="maxVelLegend">0.30</span>
+                                <span class="legend-label-text">Alta</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button id="playPauseBtn" class="btn-play" onclick="togglePlayPause()">
+                            <span id="playPauseIcon">⏸️</span>
+                            <span id="playPauseText">Pausar</span>
+                        </button>
+                        <button class="btn-reset" onclick="reset()">
+                            <span>🔄</span>
+                            <span>Reiniciar</span>
+                        </button>
+                        <button class="btn-clear" onclick="clearObstacles()">
+                            <span>🗑️</span>
+                            <span>Limpiar</span>
+                        </button>
+                        <button class="btn-export" onclick="exportImage()">
+                            <span>📸</span>
+                            <span>Exportar</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="stats-sidebar">
+                    <div class="chart-container">
+                        <div class="chart-title">📊 Fuerza de Arrastre</div>
+                        <canvas id="dragChart"></canvas>
+                    </div>
+
+                    <div class="metric-grid">
+                        <div class="metric-card">
+                            <div class="metric-card-title">Arrastre (Cd)</div>
+                            <div class="metric-card-value" id="dragCoeff">0.00</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-card-title">Strouhal</div>
+                            <div class="metric-card-value" id="strouhal">0.00</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-card-title">Vel. Máx</div>
+                            <div class="metric-card-value" id="maxVelocity">0.00</div>
+                        </div>
+
+                        <div class="metric-card">
+                            <div class="metric-card-title">Energía</div>
+                            <div class="metric-card-value" id="kineticEnergy">0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <p><span class="footer-highlight">Lattice D2Q9</span> • Dirichlet/Neumann/Bounce-back</p>
+                <div class="footer-brand">
+                    Escuela Peruana del Agua
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const particleCanvas = document.getElementById('particleCanvas');
+        const particleCtx = particleCanvas.getContext('2d');
+        const dragChartCanvas = document.getElementById('dragChart');
+        const dragChartCtx = dragChartCanvas.getContext('2d');
+        
+        const NX = 225;
+        const NY = 112;
+        const SCALE = 4;
+        
+        let isRunning = true;
+        let animationId = null;
+        let currentObstacleType = 'circle';
+        let isEraserMode = false;
+        let showArrows = true;
+        let showStreamlines = false;
+        let showParticles = false;
+        let arrowDensity = 12;
+        let arrowSize = 1.5;
+        let arrowColorScheme = 'white';
+        let colorScheme = 'rainbow';
+        let stepsPerFrame = 3;
+        let totalSimSteps = 0;
+        let dragHistory = [];
+        let maxDragHistory = 100;
+        
+        const ex = [0, 1, 0, -1, 0, 1, -1, -1, 1];
+        const ey = [0, 0, 1, 0, -1, 1, 1, -1, -1];
+        const w = [4/9, 1/9, 1/9, 1/9, 1/9, 1/36, 1/36, 1/36, 1/36];
+        
+        let omega = 1.7;
+        let u0 = 0.15;
+        
+        let f = Array(9).fill(null).map(() => 
+            Array(NY).fill(null).map(() => Array(NX).fill(0))
+        );
+        let feq = Array(9).fill(null).map(() => 
+            Array(NY).fill(null).map(() => Array(NX).fill(0))
+        );
+        let rho = Array(NY).fill(null).map(() => Array(NX).fill(1));
+        let ux = Array(NY).fill(null).map(() => Array(NX).fill(u0));
+        let uy = Array(NY).fill(null).map(() => Array(NX).fill(0));
+        let obstacle = Array(NY).fill(null).map(() => Array(NX).fill(false));
+        
+        let particles = [];
+        const maxParticles = 200;
+        
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < maxParticles; i++) {
+                particles.push({
+                    x: Math.random() * 10,
+                    y: Math.random() * NY,
+                    trail: []
+                });
+            }
+        }
+        
+        initParticles();
+        
+        const presets = {
+            laminar: { velocity: 0.06, viscosity: 1.92 },
+            transitional: { velocity: 0.12, viscosity: 1.75 },
+            turbulent: { velocity: 0.20, viscosity: 1.55 },
+            vortex: { velocity: 0.16, viscosity: 1.65 }
+        };
+        
+        function applyPreset(presetName) {
+            const preset = presets[presetName];
+            
+            document.getElementById('velocitySlider').value = preset.velocity;
+            document.getElementById('viscositySlider').value = preset.viscosity;
+            u0 = preset.velocity;
+            omega = preset.viscosity;
+            document.getElementById('velocityValue').textContent = u0.toFixed(2);
+            document.getElementById('viscosityValue').textContent = omega.toFixed(2);
+            document.getElementById('reynolds').textContent = calculateReynolds();
+            
+            totalSimSteps = 0;
+            dragHistory = [];
+            initEquilibrium();
+            
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`[data-preset="${presetName}"]`).classList.add('active');
+        }
+        
+        document.querySelectorAll('.preset-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                applyPreset(btn.dataset.preset);
+            });
+        });
+        
+        const colorSchemes = {
+            rainbow: (t) => {
+                const hue = (1 - t) * 240;
+                return hslToRgb(hue / 360, 1, 0.5);
+            },
+            viridis: (t) => {
+                const colors = [
+                    [68, 1, 84], [72, 40, 120], [62, 73, 137], [49, 104, 142],
+                    [38, 130, 142], [31, 158, 137], [53, 183, 121], [109, 205, 89],
+                    [180, 222, 44], [253, 231, 37]
+                ];
+                const idx = t * (colors.length - 1);
+                const i1 = Math.floor(idx);
+                const i2 = Math.min(i1 + 1, colors.length - 1);
+                const frac = idx - i1;
+                return [
+                    colors[i1][0] + (colors[i2][0] - colors[i1][0]) * frac,
+                    colors[i1][1] + (colors[i2][1] - colors[i1][1]) * frac,
+                    colors[i1][2] + (colors[i2][2] - colors[i1][2]) * frac
+                ];
+            },
+            plasma: (t) => {
+                const colors = [
+                    [13, 8, 135], [84, 2, 163], [139, 10, 165], [185, 50, 137],
+                    [219, 92, 104], [244, 136, 73], [254, 188, 43], [240, 249, 33]
+                ];
+                const idx = t * (colors.length - 1);
+                const i1 = Math.floor(idx);
+                const i2 = Math.min(i1 + 1, colors.length - 1);
+                const frac = idx - i1;
+                return [
+                    colors[i1][0] + (colors[i2][0] - colors[i1][0]) * frac,
+                    colors[i1][1] + (colors[i2][1] - colors[i1][1]) * frac,
+                    colors[i1][2] + (colors[i2][2] - colors[i1][2]) * frac
+                ];
+            },
+            turbo: (t) => {
+                const colors = [
+                    [48, 18, 59], [68, 92, 166], [50, 179, 213], [42, 223, 157],
+                    [143, 255, 83], [240, 214, 44], [238, 118, 36], [186, 17, 5]
+                ];
+                const idx = t * (colors.length - 1);
+                const i1 = Math.floor(idx);
+                const i2 = Math.min(i1 + 1, colors.length - 1);
+                const frac = idx - i1;
+                return [
+                    colors[i1][0] + (colors[i2][0] - colors[i1][0]) * frac,
+                    colors[i1][1] + (colors[i2][1] - colors[i1][1]) * frac,
+                    colors[i1][2] + (colors[i2][2] - colors[i1][2]) * frac
+                ];
+            },
+            cool: (t) => {
+                return [t * 255, (1 - t) * 255, 255];
+            },
+            hot: (t) => {
+                if (t < 0.33) return [t * 3 * 255, 0, 0];
+                if (t < 0.66) return [255, (t - 0.33) * 3 * 255, 0];
+                return [255, 255, (t - 0.66) * 3 * 255];
+            }
+        };
+        
+        function updateLegendGradient() {
+            const scheme = colorSchemes[colorScheme];
+            let gradientCSS = 'linear-gradient(90deg,'; // Cambio a 90deg para horizontal
+            for (let i = 0; i <= 10; i++) {
+                const t = i / 10;
+                const rgb = scheme(t); // Sin invertir para que vaya de bajo a alto
+                gradientCSS += `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]}) ${i * 10}%${i < 10 ? ',' : ''}`;
+            }
+            gradientCSS += ')';
+            document.getElementById('legendGradient').style.background = gradientCSS;
+        }
+        
+        document.getElementById('colorScheme').addEventListener('change', (e) => {
+            colorScheme = e.target.value;
+            updateLegendGradient();
+        });
+        
+        updateLegendGradient();
+        
+        function calculateReynolds() {
+            const nu = (1/omega - 0.5) / 3;
+            const L = NY / 6;
+            return Math.round(u0 * L / nu);
+        }
+
+        function createCircleObstacle() {
+            const cx = NX / 4;
+            const cy = NY / 2;
+            const radius = NY / 6;
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    const dx = x - cx;
+                    const dy = y - cy;
+                    if (dx * dx + dy * dy < radius * radius) {
+                        obstacle[y][x] = true;
+                    }
+                }
+            }
+        }
+
+        function createSquareObstacle() {
+            const cx = NX / 4;
+            const cy = NY / 2;
+            const size = NY / 3;
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    if (Math.abs(x - cx) < size/2 && Math.abs(y - cy) < size/2) {
+                        obstacle[y][x] = true;
+                    }
+                }
+            }
+        }
+
+        function createAirfoilObstacle() {
+            const cx = NX / 4;
+            const cy = NY / 2;
+            const chord = NY / 2;
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    const xRel = (x - cx) / chord;
+                    const yRel = (y - cy) / chord;
+                    if (xRel >= 0 && xRel <= 1) {
+                        const thickness = 0.12 * (0.2969 * Math.sqrt(xRel) - 0.1260 * xRel - 0.3516 * xRel * xRel + 0.2843 * xRel * xRel * xRel - 0.1015 * xRel * xRel * xRel * xRel);
+                        if (Math.abs(yRel) < thickness) {
+                            obstacle[y][x] = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        function createCylinderObstacle() {
+            const cx = NX / 4;
+            const cy = NY / 2;
+            const width = NY / 8;
+            const height = NY / 2.5;
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    if (Math.abs(x - cx) < width && Math.abs(y - cy) < height) {
+                        obstacle[y][x] = true;
+                    }
+                }
+            }
+        }
+
+        function createDiamondObstacle() {
+            const cx = NX / 4;
+            const cy = NY / 2;
+            const size = NY / 3;
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    const dx = Math.abs(x - cx);
+                    const dy = Math.abs(y - cy);
+                    if (dx / size + dy / size < 0.5) {
+                        obstacle[y][x] = true;
+                    }
+                }
+            }
+        }
+        
+        createCircleObstacle();
+        
+        function initEquilibrium() {
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    ux[y][x] = u0;
+                    const u = ux[y][x];
+                    const v = uy[y][x];
+                    const usqr = u * u + v * v;
+                    for (let i = 0; i < 9; i++) {
+                        const cu = ex[i] * u + ey[i] * v;
+                        feq[i][y][x] = w[i] * rho[y][x] * (1 + 3 * cu + 4.5 * cu * cu - 1.5 * usqr);
+                        f[i][y][x] = feq[i][y][x];
+                    }
+                }
+            }
+        }
+        
+        initEquilibrium();
+        
+        document.getElementById('velocitySlider').addEventListener('input', (e) => {
+            u0 = parseFloat(e.target.value);
+            document.getElementById('velocityValue').textContent = u0.toFixed(2);
+            document.getElementById('reynolds').textContent = calculateReynolds();
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            initEquilibrium();
+        });
+
+        document.getElementById('viscositySlider').addEventListener('input', (e) => {
+            omega = parseFloat(e.target.value);
+            document.getElementById('viscosityValue').textContent = omega.toFixed(2);
+            document.getElementById('reynolds').textContent = calculateReynolds();
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        });
+
+        document.getElementById('stepsSlider').addEventListener('input', (e) => {
+            stepsPerFrame = parseInt(e.target.value);
+            document.getElementById('stepsValue').textContent = stepsPerFrame + 'x';
+        });
+
+        document.getElementById('showArrows').addEventListener('change', (e) => {
+            showArrows = e.target.checked;
+        });
+
+        document.getElementById('showStreamlines').addEventListener('change', (e) => {
+            showStreamlines = e.target.checked;
+        });
+
+        document.getElementById('showParticles').addEventListener('change', (e) => {
+            showParticles = e.target.checked;
+            if (showParticles) initParticles();
+        });
+
+        document.getElementById('arrowDensitySlider').addEventListener('input', (e) => {
+            arrowDensity = parseInt(e.target.value);
+            document.getElementById('arrowDensityValue').textContent = arrowDensity;
+        });
+
+        document.getElementById('arrowSizeSlider').addEventListener('input', (e) => {
+            arrowSize = parseFloat(e.target.value);
+            document.getElementById('arrowSizeValue').textContent = arrowSize.toFixed(1) + 'x';
+        });
+
+        document.getElementById('arrowColorScheme').addEventListener('change', (e) => {
+            arrowColorScheme = e.target.value;
+        });
+
+        document.querySelectorAll('.obstacle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.obstacle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentObstacleType = btn.dataset.type;
+                
+                if (currentObstacleType !== 'draw') {
+                    clearObstacles();
+                    switch(currentObstacleType) {
+                        case 'circle': createCircleObstacle(); break;
+                        case 'square': createSquareObstacle(); break;
+                        case 'airfoil': createAirfoilObstacle(); break;
+                        case 'cylinder': createCylinderObstacle(); break;
+                        case 'diamond': createDiamondObstacle(); break;
+                    }
+                }
+            });
+        });
+
+        document.getElementById('eraserMode').addEventListener('change', (e) => {
+            isEraserMode = e.target.checked;
+        });
+        
+        let isDrawing = false;
+        
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX, clientY;
+            if (e.touches && e.touches[0]) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            const x = Math.floor((clientX - rect.left) * scaleX / SCALE);
+            const y = Math.floor((clientY - rect.top) * scaleY / SCALE);
+            
+            return { x, y };
+        }
+        
+        canvas.addEventListener('mousedown', (e) => {
+            if (currentObstacleType === 'draw') {
+                isDrawing = true;
+                modifyObstacle(e);
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (isDrawing && currentObstacleType === 'draw') {
+                modifyObstacle(e);
+            }
+        });
+        
+        canvas.addEventListener('mouseup', () => { isDrawing = false; });
+        canvas.addEventListener('mouseleave', () => { isDrawing = false; });
+        
+        canvas.addEventListener('touchstart', (e) => {
+            if (currentObstacleType === 'draw') {
+                e.preventDefault();
+                isDrawing = true;
+                modifyObstacle(e);
+            }
+        }, { passive: false });
+        
+        canvas.addEventListener('touchmove', (e) => {
+            if (isDrawing && currentObstacleType === 'draw') {
+                e.preventDefault();
+                modifyObstacle(e);
+            }
+        }, { passive: false });
+        
+        canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isDrawing = false;
+        }, { passive: false });
+        
+        function modifyObstacle(e) {
+            const { x, y } = getCanvasCoordinates(e);
+            
+            if (x >= 0 && x < NX && y >= 0 && y < NY) {
+                const brushSize = 3;
+                for (let dy = -brushSize; dy <= brushSize; dy++) {
+                    for (let dx = -brushSize; dx <= brushSize; dx++) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < NX && ny >= 0 && ny < NY && dx*dx + dy*dy <= brushSize*brushSize) {
+                            obstacle[ny][nx] = !isEraserMode;
+                        }
+                    }
+                }
+            }
+        }
+        
+        let lastTime = performance.now();
+        let frameCount = 0;
+        
+        function calculateDragCoefficient() {
+            let fx = 0, fy = 0;
+            for (let y = 1; y < NY - 1; y++) {
+                for (let x = 1; x < NX - 1; x++) {
+                    if (obstacle[y][x]) {
+                        fx += (rho[y][x+1] - rho[y][x-1]);
+                        fy += (rho[y+1][x] - rho[y-1][x]);
+                    }
+                }
+            }
+            const drag = Math.sqrt(fx * fx + fy * fy);
+            const cd = drag / (0.5 * u0 * u0 * NY / 6);
+            return cd;
+        }
+        
+        function simulate() {
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    if (obstacle[y][x]) continue;
+                    
+                    let r = 0, u = 0, v = 0;
+                    for (let i = 0; i < 9; i++) {
+                        r += f[i][y][x];
+                        u += ex[i] * f[i][y][x];
+                        v += ey[i] * f[i][y][x];
+                    }
+                    
+                    rho[y][x] = r;
+                    ux[y][x] = u / r;
+                    uy[y][x] = v / r;
+                    
+                    const usqr = ux[y][x] * ux[y][x] + uy[y][x] * uy[y][x];
+                    for (let i = 0; i < 9; i++) {
+                        const cu = ex[i] * ux[y][x] + ey[i] * uy[y][x];
+                        feq[i][y][x] = w[i] * rho[y][x] * (1 + 3 * cu + 4.5 * cu * cu - 1.5 * usqr);
+                        f[i][y][x] += omega * (feq[i][y][x] - f[i][y][x]);
+                    }
+                }
+            }
+            
+            const fNew = Array(9).fill(null).map(() => 
+                Array(NY).fill(null).map(() => Array(NX).fill(0))
+            );
+            
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    for (let i = 0; i < 9; i++) {
+                        const nx = x + ex[i];
+                        const ny = y + ey[i];
+                        if (nx >= 0 && nx < NX && ny >= 0 && ny < NY) {
+                            fNew[i][ny][nx] = f[i][y][x];
+                        }
+                    }
+                }
+            }
+            
+            f = fNew;
+            
+            for (let y = 0; y < NY; y++) {
+                rho[y][0] = 1;
+                ux[y][0] = u0;
+                uy[y][0] = 0;
+                const usqr = ux[y][0] * ux[y][0] + uy[y][0] * uy[y][0];
+                for (let i = 0; i < 9; i++) {
+                    const cu = ex[i] * ux[y][0] + ey[i] * uy[y][0];
+                    f[i][y][0] = w[i] * rho[y][0] * (1 + 3 * cu + 4.5 * cu * cu - 1.5 * usqr);
+                }
+            }
+            
+            for (let y = 0; y < NY; y++) {
+                for (let i = 0; i < 9; i++) {
+                    f[i][y][NX-1] = f[i][y][NX-2];
+                }
+            }
+            
+            for (let x = 0; x < NX; x++) {
+                f[2][0][x] = f[4][0][x];
+                f[5][0][x] = f[7][0][x];
+                f[6][0][x] = f[8][0][x];
+                f[4][NY-1][x] = f[2][NY-1][x];
+                f[7][NY-1][x] = f[5][NY-1][x];
+                f[8][NY-1][x] = f[6][NY-1][x];
+            }
+            
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    if (obstacle[y][x]) {
+                        const temp = [...f.map(fi => fi[y][x])];
+                        f[1][y][x] = temp[3];
+                        f[2][y][x] = temp[4];
+                        f[3][y][x] = temp[1];
+                        f[4][y][x] = temp[2];
+                        f[5][y][x] = temp[7];
+                        f[6][y][x] = temp[8];
+                        f[7][y][x] = temp[5];
+                        f[8][y][x] = temp[6];
+                    }
+                }
+            }
+            
+            totalSimSteps++;
+            
+            if (totalSimSteps % 5 === 0) {
+                const cd = calculateDragCoefficient();
+                dragHistory.push(cd);
+                if (dragHistory.length > maxDragHistory) {
+                    dragHistory.shift();
+                }
+            }
+        }
+        
+        function updateParticles() {
+            particles.forEach(p => {
+                const x = Math.floor(p.x);
+                const y = Math.floor(p.y);
+                
+                if (x >= 0 && x < NX && y >= 0 && y < NY && !obstacle[y][x]) {
+                    p.x += ux[y][x] * 2;
+                    p.y += uy[y][x] * 2;
+                    
+                    p.trail.push({ x: p.x, y: p.y });
+                    if (p.trail.length > 20) p.trail.shift();
+                } else {
+                    p.x = Math.random() * 10;
+                    p.y = Math.random() * NY;
+                    p.trail = [];
+                }
+                
+                if (p.x > NX) {
+                    p.x = 0;
+                    p.y = Math.random() * NY;
+                    p.trail = [];
+                }
+            });
+        }
+        
+        function drawArrow(ctx, x, y, vx, vy, size, color) {
+            const len = Math.sqrt(vx * vx + vy * vy);
+            if (len < 0.01) return;
+            
+            const scale = size * 10;
+            const dx = (vx / len) * scale;
+            const dy = (vy / len) * scale;
+            
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 1.5;
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + dx, y + dy);
+            ctx.stroke();
+            
+            const headLen = 4;
+            const angle = Math.atan2(dy, dx);
+            ctx.beginPath();
+            ctx.moveTo(x + dx, y + dy);
+            ctx.lineTo(x + dx - headLen * Math.cos(angle - Math.PI / 6), 
+                      y + dy - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(x + dx - headLen * Math.cos(angle + Math.PI / 6), 
+                      y + dy - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        function drawStreamlines() {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 1;
+            
+            for (let startY = 10; startY < NY; startY += 15) {
+                let x = 5;
+                let y = startY;
+                
+                ctx.beginPath();
+                ctx.moveTo(x * SCALE, y * SCALE);
+                
+                for (let step = 0; step < 200 && x < NX && y > 0 && y < NY; step++) {
+                    const xi = Math.floor(x);
+                    const yi = Math.floor(y);
+                    
+                    if (xi < 0 || xi >= NX || yi < 0 || yi >= NY || obstacle[yi][xi]) break;
+                    
+                    x += ux[yi][xi] * 0.5;
+                    y += uy[yi][xi] * 0.5;
+                    
+                    ctx.lineTo(x * SCALE, y * SCALE);
+                }
+                
+                ctx.stroke();
+            }
+        }
+        
+        function render() {
+            const imageData = ctx.createImageData(NX * SCALE, NY * SCALE);
+            const scheme = colorSchemes[colorScheme];
+            
+            let maxVel = 0;
+            let minVel = Infinity;
+            let totalKE = 0;
+            
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    if (!obstacle[y][x]) {
+                        const vel = Math.sqrt(ux[y][x] * ux[y][x] + uy[y][x] * uy[y][x]);
+                        maxVel = Math.max(maxVel, vel);
+                        minVel = Math.min(minVel, vel);
+                        totalKE += vel * vel;
+                    }
+                }
+            }
+            
+            const midVel = (maxVel + minVel) / 2;
+            document.getElementById('maxVelLegend').textContent = maxVel.toFixed(3);
+            document.getElementById('midVelLegend').textContent = midVel.toFixed(3);
+            document.getElementById('minVelLegend').textContent = minVel.toFixed(3);
+            document.getElementById('maxVelocity').textContent = maxVel.toFixed(3);
+            document.getElementById('kineticEnergy').textContent = (totalKE / 1000).toFixed(2);
+            
+            for (let y = 0; y < NY; y++) {
+                for (let x = 0; x < NX; x++) {
+                    let speed = Math.sqrt(ux[y][x] * ux[y][x] + uy[y][x] * uy[y][x]);
+                    speed = Math.min(speed / (maxVel || 0.01), 1);
+                    
+                    let rgb;
+                    if (obstacle[y][x]) {
+                        rgb = [40, 40, 40];
+                    } else {
+                        rgb = scheme(speed);
+                    }
+                    
+                    for (let dy = 0; dy < SCALE; dy++) {
+                        for (let dx = 0; dx < SCALE; dx++) {
+                            const px = x * SCALE + dx;
+                            const py = y * SCALE + dy;
+                            const index = (py * NX * SCALE + px) * 4;
+                            imageData.data[index] = rgb[0];
+                            imageData.data[index + 1] = rgb[1];
+                            imageData.data[index + 2] = rgb[2];
+                            imageData.data[index + 3] = 255;
+                        }
+                    }
+                }
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+            
+            if (showStreamlines) {
+                drawStreamlines();
+            }
+            
+            if (showArrows) {
+                for (let y = arrowDensity / 2; y < NY; y += arrowDensity) {
+                    for (let x = arrowDensity / 2; x < NX; x += arrowDensity) {
+                        if (!obstacle[y][x]) {
+                            const speed = Math.sqrt(ux[y][x] * ux[y][x] + uy[y][x] * uy[y][x]);
+                            const normalizedSpeed = Math.min(speed / (maxVel || 0.01), 1);
+                            
+                            let color;
+                            if (arrowColorScheme === 'white') {
+                                color = 'rgba(255, 255, 255, 0.9)';
+                            } else if (arrowColorScheme === 'black') {
+                                color = 'rgba(0, 0, 0, 0.8)';
+                            } else {
+                                const hue = (1 - normalizedSpeed) * 240;
+                                color = `hsl(${hue}, 100%, 50%)`;
+                            }
+                            
+                            drawArrow(ctx, x * SCALE + SCALE/2, y * SCALE + SCALE/2, 
+                                     ux[y][x], uy[y][x], arrowSize, color);
+                        }
+                    }
+                }
+            }
+            
+            if (showParticles) {
+                particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+                updateParticles();
+                
+                particles.forEach(p => {
+                    if (p.trail.length > 1) {
+                        particleCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+                        particleCtx.lineWidth = 2;
+                        particleCtx.beginPath();
+                        particleCtx.moveTo(p.trail[0].x * SCALE, p.trail[0].y * SCALE);
+                        for (let i = 1; i < p.trail.length; i++) {
+                            particleCtx.lineTo(p.trail[i].x * SCALE, p.trail[i].y * SCALE);
+                        }
+                        particleCtx.stroke();
+                    }
+                    
+                    particleCtx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                    particleCtx.beginPath();
+                    particleCtx.arc(p.x * SCALE, p.y * SCALE, 3, 0, Math.PI * 2);
+                    particleCtx.fill();
+                });
+            }
+            
+            if (dragHistory.length > 1) {
+                drawDragChart();
+            }
+            
+            if (dragHistory.length > 0) {
+                document.getElementById('dragCoeff').textContent = dragHistory[dragHistory.length - 1].toFixed(3);
+            }
+            
+            if (dragHistory.length > 20) {
+                let peaks = 0;
+                for (let i = 1; i < dragHistory.length - 1; i++) {
+                    if (dragHistory[i] > dragHistory[i-1] && dragHistory[i] > dragHistory[i+1]) {
+                        peaks++;
+                    }
+                }
+                const frequency = peaks / dragHistory.length;
+                const strouhal = frequency * (NY / 6) / u0;
+                document.getElementById('strouhal').textContent = strouhal.toFixed(3);
+            }
+            
+            frameCount++;
+            const currentTime = performance.now();
+            if (currentTime - lastTime >= 1000) {
+                document.getElementById('fps').textContent = Math.round(frameCount * 1000 / (currentTime - lastTime));
+                document.getElementById('totalSteps').textContent = totalSimSteps;
+                frameCount = 0;
+                lastTime = currentTime;
+            }
+        }
+        
+        function drawDragChart() {
+            dragChartCtx.clearRect(0, 0, dragChartCanvas.width, dragChartCanvas.height);
+            
+            if (dragHistory.length < 2) return;
+            
+            const width = dragChartCanvas.width;
+            const height = dragChartCanvas.height;
+            const padding = 15;
+            const plotWidth = width - 2 * padding;
+            const plotHeight = height - 2 * padding;
+            
+            const minDrag = Math.min(...dragHistory);
+            const maxDrag = Math.max(...dragHistory);
+            const range = maxDrag - minDrag || 1;
+            
+            dragChartCtx.strokeStyle = '#475569';
+            dragChartCtx.lineWidth = 1;
+            dragChartCtx.beginPath();
+            dragChartCtx.moveTo(padding, padding);
+            dragChartCtx.lineTo(padding, height - padding);
+            dragChartCtx.lineTo(width - padding, height - padding);
+            dragChartCtx.stroke();
+            
+            dragChartCtx.strokeStyle = '#0ea5e9';
+            dragChartCtx.lineWidth = 2;
+            dragChartCtx.beginPath();
+            
+            dragHistory.forEach((value, i) => {
+                const x = padding + (i / (dragHistory.length - 1)) * plotWidth;
+                const y = height - padding - ((value - minDrag) / range) * plotHeight;
+                
+                if (i === 0) {
+                    dragChartCtx.moveTo(x, y);
+                } else {
+                    dragChartCtx.lineTo(x, y);
+                }
+            });
+            
+            dragChartCtx.stroke();
+            
+            dragChartCtx.lineTo(width - padding, height - padding);
+            dragChartCtx.lineTo(padding, height - padding);
+            dragChartCtx.closePath();
+            dragChartCtx.fillStyle = 'rgba(14, 165, 233, 0.2)';
+            dragChartCtx.fill();
+        }
+        
+        function hslToRgb(h, s, l) {
+            let r, g, b;
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                r = hue2rgb(p, q, h + 1/3);
+                g = hue2rgb(p, q, h);
+                b = hue2rgb(p, q, h - 1/3);
+            }
+            return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
+        }
+        
+        function animate() {
+            if (isRunning) {
+                for (let step = 0; step < stepsPerFrame; step++) {
+                    simulate();
+                }
+                render();
+            }
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        function togglePlayPause() {
+            isRunning = !isRunning;
+            const icon = document.getElementById('playPauseIcon');
+            const text = document.getElementById('playPauseText');
+            if (isRunning) {
+                icon.textContent = '⏸️';
+                text.textContent = 'Pausar';
+            } else {
+                icon.textContent = '▶️';
+                text.textContent = 'Reproducir';
+            }
+        }
+        
+        function reset() {
+            location.reload();
+        }
+
+        function clearObstacles() {
+            obstacle = Array(NY).fill(null).map(() => Array(NX).fill(false));
+        }
+        
+        function toggleInfo() {
+            const infoBox = document.getElementById('infoBox');
+            infoBox.classList.toggle('hidden');
+        }
+        
+        function toggleFullscreen() {
+            document.body.classList.toggle('fullscreen');
+        }
+        
+        function exportImage() {
+            const link = document.createElement('a');
+            link.download = `simulador-lbm-${Date.now()}.png`;
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        document.getElementById('reynolds').textContent = calculateReynolds();
+        
+        animate();
+    </script>
+</body>
+</html>
